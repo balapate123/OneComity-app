@@ -23,6 +23,7 @@ exports.registerUser = async (req, res) => {
 
         await user.save();
 
+        console.log('User Registered Successfully !!!!');
         const payload = { user: { id: user.id } };
 
         jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
@@ -31,13 +32,13 @@ exports.registerUser = async (req, res) => {
         });
     } catch (err) {
         console.error(err.message);
+        onsole.log('Registring User Error');
         res.status(500).send('Server error');
     }
 };
 
 exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
-
     try {
         let user = await User.findOne({ email });
         if (!user) return res.status(400).json({ msg: 'User not found' });
@@ -46,7 +47,9 @@ exports.loginUser = async (req, res) => {
         if (!isMatch) return res.status(400).json({ msg: 'Invalid password' });
 
         const payload = { user: { id: user.id } };
+        
 
+        console.log('Logging User Success');
         jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
             if (err) throw err;
             res.json({ token });
@@ -60,6 +63,7 @@ exports.loginUser = async (req, res) => {
 exports.sendOtp = async (req, res) => {
     const { mobile } = req.body;
 
+    console.log('Sending OTP');
     const client = require('twilio')(
         process.env.TWILIO_ACCOUNT_SID,
         process.env.TWILIO_AUTH_TOKEN
@@ -79,6 +83,7 @@ exports.sendOtp = async (req, res) => {
         res.json({ msg: 'OTP sent successfully.' });
     } catch (error) {
         console.error(error.message);
+        console.log('Send OTP Error');
         res.status(500).send('Error sending OTP.');
     }
 };
@@ -87,6 +92,7 @@ exports.sendOtp = async (req, res) => {
 
 exports.verifyOtp = async (req, res) => {
     const { mobile, otp } = req.body;
+    console.log('Veryfying oTP');
 
     try {
         const otpRecord = await Otp.findOne({ mobile, otp });
@@ -102,6 +108,7 @@ exports.verifyOtp = async (req, res) => {
         res.json({ msg: 'OTP verified successfully.' });
     } catch (error) {
         console.error(error.message);
+        onsole.log('Verify OTP Error');
         res.status(500).send('Server error during OTP verification.');
     }
 };
