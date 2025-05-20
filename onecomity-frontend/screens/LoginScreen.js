@@ -20,7 +20,14 @@ export default function LoginScreen({ navigation }) {
         // Save token in AsyncStorage
         await AsyncStorage.setItem('token', res.data.token);
 
-        navigation.navigate('Activity');
+        if (res.data.username) {
+          await AsyncStorage.setItem('username', res.data.username);
+        }
+        if (res.data.name) {
+            await AsyncStorage.setItem('name', res.data.name);
+        }
+
+        navigation.navigate('Home');
     } catch (err) {
         const errorMessage =
         err?.response?.data?.msg || err?.message || 'Login failed. Please try again.';
