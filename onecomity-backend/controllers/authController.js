@@ -71,7 +71,9 @@ function generateUniqueUsername() {
 //     }
 // };
 exports.registerUser = async (req, res) => {
-    const { email, mobile, password, name } = req.body;
+    const { email, mobile, password, name, activity  } = req.body;
+
+     const finalActivity = activity || 'weed';
 
     try {
         if (!email || !mobile || !password || !name) {
@@ -100,6 +102,7 @@ exports.registerUser = async (req, res) => {
             email,
             mobile,
             password: hashedPassword,
+            activity: finalActivity,
             name,
             username // generated unique username!
         });
@@ -107,6 +110,8 @@ exports.registerUser = async (req, res) => {
         await user.save();
 
         console.log('User Registered Successfully!');
+        console.log('Registering/Logging in user:', user._id, user.id);
+
         const payload = { user: { id: user.id, username: user.username } };
 
         jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
@@ -133,15 +138,24 @@ exports.loginUser = async (req, res) => {
         const payload = { user: { id: user.id, username: user.username } };
 
         console.log('Logging User Success');
+        console.log('Registering/Logging in user:', user._id, user.id);
+
         jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' }, (err, token) => {
             if (err) throw err;
-            res.json({ token, username: user.username, name: user.name });
+            // ADD userId to response!
+            res.json({
+                token,
+                userId: user.id,              // <-- Add this line!
+                username: user.username,
+                name: user.name
+            });
         });
     } catch (err) {
         console.error('Login error:', err.message);
         res.status(500).send('Server error');
     }
 };
+
 
 // SEND OTP
 exports.sendOtp = async (req, res) => {

@@ -1,26 +1,56 @@
-import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-
-const dummyChats = [
-  { id: '1', name: 'weeduser1@comity.com' },
-  { id: '2', name: 'wineuser1@comity.com' },
-];
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { getChatList } from '../services/api';
 
 export default function ChatListScreen({ navigation }) {
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getChatList();
+        setChats(res.data.chats || []);
+      } catch (err) {
+        console.log('❌ Failed to load chat list:', err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+        <Text>Loading chats...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>💬 Your Chats</Text>
       <FlatList
-        data={dummyChats}
-        keyExtractor={(item) => item.id}
+        data={chats}
+        keyExtractor={(item) => item._id}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.chatItem}
-            onPress={() => navigation.navigate('Chat', { userId: item.id, name: item.name })}
+            onPress={() =>
+              navigation.navigate('ChatScreen', {
+                userId: item._id,
+                username: item.username,
+                activity: item.activity,
+                name: item.name
+              })
+            }
           >
-            <Text style={styles.chatName}>{item.name}</Text>
+            <Text style={styles.chatName}>{item.username}</Text>
+            <Text style={styles.chatSub}>{item.name}</Text>
           </TouchableOpacity>
         )}
+        ListEmptyComponent={<Text>No chats yet. Start chatting!</Text>}
       />
     </View>
   );
@@ -35,5 +65,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
   },
-  chatName: { fontSize: 18 },
+  chatName: { fontSize: 18, fontWeight: 'bold' },
+  chatSub: { fontSize: 14, color: '#666' },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

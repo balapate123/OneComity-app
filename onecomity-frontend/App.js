@@ -25,7 +25,13 @@ export default function App() {
         <Stack.Screen name="Activity" component={ActivitySelectorScreen} />
         <Stack.Screen name="NearbyScreen" component={NearbyUsersScreen} />
         <Stack.Screen name="Chats" component={ChatListScreen} />
-        <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatScreen}
+          options={({ route }) => ({
+            title: route.params?.username || 'Chat'
+          })}
+        />
 
       </Stack.Navigator>
     </NavigationContainer>

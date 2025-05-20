@@ -3,12 +3,14 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { loginUser } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
+    await AsyncStorage.clear();
     if (!email || !password) {
         setError('Please enter both email and password.');
         return;
@@ -19,7 +21,12 @@ export default function LoginScreen({ navigation }) {
 
         // Save token in AsyncStorage
         await AsyncStorage.setItem('token', res.data.token);
+        console.log('Token after login:', res.data.token);
 
+         // NEW: Save your userId!
+        if (res.data.userId) {
+        await AsyncStorage.setItem('myUserId', res.data.userId);
+        }
         if (res.data.username) {
           await AsyncStorage.setItem('username', res.data.username);
         }

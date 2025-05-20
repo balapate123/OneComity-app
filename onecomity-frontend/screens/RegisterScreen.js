@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, Modal, TouchableOpacity } fr
 import { registerUser } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -13,6 +14,7 @@ export default function RegisterScreen({ navigation }) {
   const [generatedUsername, setGeneratedUsername] = useState('');
 
   const handleRegister = async () => {
+    await AsyncStorage.clear();
     setError('');
     if (!email || !mobile || !password || !name) {
       setError('Please fill in all fields.');

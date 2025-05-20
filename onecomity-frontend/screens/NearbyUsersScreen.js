@@ -91,6 +91,7 @@ export default function NearbyUsersScreen({ route, navigation }) {
             onPress={() => {
               console.log('💬 Open Chat for user:', selectedUser.username, selectedUser._id);
               setSelectedUser(null);
+              console.log(selectedUser.activity);
               navigation.navigate('ChatScreen', {
                 userId: selectedUser._id,
                 username: selectedUser.username,

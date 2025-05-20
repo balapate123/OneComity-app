@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API = axios.create({
-  baseURL: 'http://192.168.2.34:5000/api',
+  baseURL: 'http://192.168.2.34:5000/api', // <-- set to your backend IP
   timeout: 10000,
 });
 
@@ -15,11 +15,27 @@ API.interceptors.request.use(async (config) => {
   return config;
 });
 
+// ---- AUTH ----
 export const loginUser = (data) => API.post('/auth/login', data);
 export const registerUser = (data) => API.post('/auth/register', data);
 export const sendOtp = (mobile) => API.post('/auth/send-otp', { mobile });
 export const verifyOtp = (mobile, otp) => API.post('/auth/verify-otp', { mobile, otp });
+
+// ---- USER ----
 export const getNearbyUsers = (activity, lat, lng) =>
   API.get('/user/nearby', {
     params: { activity, lat, lng },
   });
+export const updateActivity = (activity) =>
+  API.patch('/user/activity', { activity });
+
+
+
+// ---- CHAT ----
+export const getChatMessages = (userId) => API.get(`/chats/${userId}`); // plural: 'chats'
+export const sendChatMessage = (receiverId, text) => API.post('/chats/send', { receiverId, text });
+export const getChatList = () => API.get('/chats');
+
+
+// If you want to use the default axios instance for custom requests
+export default API;

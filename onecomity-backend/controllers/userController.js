@@ -28,38 +28,6 @@ exports.setUserActivity = async (req, res) => {
     }
 };
 
-// Get nearby users
-// exports.getNearbyUsers = async (req, res) => {
-//     const userId = req.user.id;
-//     const { maxDistance = 10000 } = req.query; // in meters
-
-//     try {
-//         const currentUser = await User.findById(userId);
-//         if (!currentUser || !currentUser.location) {
-//             return res.status(400).json({ msg: 'Current location missing.' });
-//         }
-
-//         const users = await User.find({
-//             _id: { $ne: userId },
-//             activity: currentUser.activity,
-//             location: {
-//                 $near: {
-//                     $geometry: {
-//                         type: "Point",
-//                         coordinates: currentUser.location.coordinates
-//                     },
-//                     $maxDistance: parseInt(maxDistance)  // 10km default
-//                 }
-//             }
-//         });
-
-//         res.json({ users });
-//     } catch (err) {
-//         console.error(err.message);
-//         res.status(500).send('Server error');
-//     }
-// };
-
 exports.getNearbyUsers = async (req, res) => {
   const { lat, lng, activity } = req.query;
 
@@ -85,5 +53,25 @@ exports.getNearbyUsers = async (req, res) => {
   } catch (err) {
     console.error('❌ Nearby search error:', err.message);
     res.status(500).json({ msg: 'Server error' });
+  }
+};
+
+
+exports.updateActivity = async (req, res) => {
+    
+  try {
+    const userId = req.user.id;
+    const { activity } = req.body;
+    console.log('Updating Activity', activity);
+    console.log('Updating activity for user:', userId);
+
+    if (!['weed', 'wine', 'water'].includes(activity)) {
+      return res.status(400).json({ msg: 'Invalid activity' });
+    }
+    const user = await User.findByIdAndUpdate(userId, { activity }, { new: true });
+    console.log('Mongoose user after update:', user);
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ msg: 'Failed to update activity' });
   }
 };
