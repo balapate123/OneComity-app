@@ -35,6 +35,7 @@ export const updateActivity = (activity) =>
 export const getChatMessages = (userId) => API.get(`/chats/${userId}`); // plural: 'chats'
 export const sendChatMessage = (receiverId, text) => API.post('/chats/send', { receiverId, text });
 export const getChatList = () => API.get('/chats');
+export const hideChat = (partnerId) => API.delete(`/chats/${partnerId}/hide`);
 
 
 // If you want to use the default axios instance for custom requests
