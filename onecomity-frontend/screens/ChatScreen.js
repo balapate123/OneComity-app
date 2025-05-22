@@ -1,67 +1,80 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from 'socket.io-client';
 import api, { getChatMessages } from '../services/api';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 const SOCKET_URL = 'http://192.168.2.34:5000'; // Your backend Socket.IO URL
 
-// Helper for bubble color by activity
-const getBubbleColor = (messageText, activity) => {
+// Helper for bubble color - NOW THEME AWARE
+const getBubbleColor = (messageText, activity, globalTheme, isMine) => {
   const lowerCaseText = messageText ? messageText.toLowerCase() : '';
-  if (lowerCaseText.includes('weed')) return '#b1e5c6'; // green
-  if (lowerCaseText.includes('wine')) return '#ffb3b3'; // red
-  // Fallback to activity prop if no keyword found
-  if (activity === 'weed') return '#b1e5c6';
-  if (activity === 'wine') return '#ffb3b3';
-  if (activity === 'water') return '#b3d1ff';
-  return '#daf1ff'; // fallback (for 'my' messages or unknown activity)
+  if (lowerCaseText.includes('weed')) return '#005C28'; // Darker Green
+  if (lowerCaseText.includes('wine')) return '#6D0D0D'; // Darker Red
+
+  // Fallback to activity prop if no keyword found - for OTHER user's bubbles
+  if (!isMine) {
+    if (activity === 'weed') return '#005C28';
+    if (activity === 'wine') return '#6D0D0D';
+    if (activity === 'water') return '#004080'; // Darker Blue for water
+    return globalTheme.secondaryBackground; // Default for other user
+  }
+  
+  // Default for "my" messages or unknown activity
+  return globalTheme.tertiaryBackground; // Default for user's own message
 };
 
 export default function ChatScreen({ route }) {
+  const globalTheme = useContext(ThemeContext);
+  
   const { userId, username, activity } = route.params; // activity comes from navigation
   const [myId, setMyId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const socketRef = useRef(null);
-  const [chatBackgroundColor, setChatBackgroundColor] = useState('#ffffff'); // Default background
+
+  // Initial state values should now use globalTheme for defaults
+  const [chatBackgroundColor, setChatBackgroundColor] = useState(globalTheme.primaryBackground);
   const [inputConfig, setInputConfig] = useState({
-    rowBgColor: '#ffffff',
-    inputBorderColor: '#ccc',
-    rowBorderTopColor: '#eee',
+    rowBgColor: globalTheme.secondaryBackground,
+    inputBorderColor: globalTheme.borderColor,
+    rowBorderTopColor: globalTheme.borderColor,
   });
 
-  // Helper to get theme color based on activity
-  const getActivityColor = (detectedActivity) => {
-    if (detectedActivity === 'weed') return '#e6ffe6'; // light green background
-    if (detectedActivity === 'wine') return '#ffe6e6'; // light red background
-    return '#ffffff'; // default white background
+  // Helper to get CHAT SCREEN background color based on activity - NOW THEME AWARE
+  const getActivityColor = (detectedActivity, theme) => {
+    if (detectedActivity === 'weed') return '#102510'; // Dark green tint for screen background
+    if (detectedActivity === 'wine') return '#251010'; // Dark red tint for screen background
+    return theme.primaryBackground; // default to global theme primary
   };
 
-  // Helper to get colors for input area
-  const getInputColors = (detectedActivity) => {
+  // Helper to get colors for INPUT AREA - NOW THEME AWARE
+  const getInputColors = (detectedActivity, theme) => {
     if (detectedActivity === 'weed') {
       return {
-        rowBgColor: '#e6ffe6', // light green
-        inputBorderColor: '#77dd77', // medium green
-        rowBorderTopColor: '#c1e5c1', // slightly darker green
+        rowBgColor: '#1A3A1A', // Darker green for input row
+        inputBorderColor: theme.accentGreen, 
+        rowBorderTopColor: theme.borderColor,
       };
     }
     if (detectedActivity === 'wine') {
       return {
-        rowBgColor: '#ffe6e6', // light red
-        inputBorderColor: '#ff8a80', // medium red
-        rowBorderTopColor: '#e5c1c1', // slightly darker red
+        rowBgColor: '#3A1A1A', // Darker red for input row
+        inputBorderColor: theme.accentRed,
+        rowBorderTopColor: theme.borderColor,
       };
     }
-    return {
-      rowBgColor: '#ffffff', // default white
-      inputBorderColor: '#ccc', // default gray
-      rowBorderTopColor: '#eee', // default light gray
+    return { // Default input colors from global theme
+      rowBgColor: theme.secondaryBackground,
+      inputBorderColor: theme.borderColor,
+      rowBorderTopColor: theme.borderColor,
     };
   };
 
-  // Helper to detect activity from message text
+  const styles = getStyles(globalTheme); // Get styles dynamically based on global theme
+
+  // Helper to detect activity from message text (remains the same)
   const detectActivityFromMessage = (messageText) => {
     const lowerCaseText = messageText ? messageText.toLowerCase() : '';
     if (lowerCaseText.includes('weed')) return 'weed';
@@ -87,28 +100,27 @@ export default function ChatScreen({ route }) {
         const res = await getChatMessages(userId);
         const loadedMessages = res.data.messages || [];
         setMessages(loadedMessages);
-        // Log for debugging
         console.log('💬 Chat history loaded:', loadedMessages.length ?? 0);
 
-        // Set initial background and input colors based on chat history
-        let activityDetected = false;
+        let activityDetectedInHistory = false;
         for (let i = loadedMessages.length - 1; i >= 0; i--) {
-          const detectedActivity = detectActivityFromMessage(loadedMessages[i].text);
-          if (detectedActivity) {
-            const newChatBgColor = getActivityColor(detectedActivity);
-            setChatBackgroundColor(newChatBgColor);
-            setInputConfig(getInputColors(detectedActivity));
-            activityDetected = true;
+          const detected = detectActivityFromMessage(loadedMessages[i].text);
+          if (detected) {
+            setChatBackgroundColor(getActivityColor(detected, globalTheme));
+            setInputConfig(getInputColors(detected, globalTheme));
+            activityDetectedInHistory = true;
             break;
           }
         }
-        if (!activityDetected) {
-          // Reset to default if no keywords in history
-          setChatBackgroundColor(getActivityColor(null));
-          setInputConfig(getInputColors(null));
+        if (!activityDetectedInHistory) {
+          setChatBackgroundColor(getActivityColor(null, globalTheme));
+          setInputConfig(getInputColors(null, globalTheme));
         }
       } catch (err) {
         console.log('❌ Failed to load chat history', err);
+        // Keep default theme colors if history fails
+        setChatBackgroundColor(globalTheme.primaryBackground);
+        setInputConfig(getInputColors(null, globalTheme));
       }
     })();
   }, [userId]);
@@ -130,13 +142,12 @@ export default function ChatScreen({ route }) {
         setMessages((prev) => [...prev, msg]);
         console.log('💬 New real-time message:', msg.text);
         // Update background and input colors based on new message
-        const detectedActivity = detectActivityFromMessage(msg.text);
-        if (detectedActivity) { // This ensures it only updates if keywords are present
-          const newChatBgColor = getActivityColor(detectedActivity);
-          setChatBackgroundColor(newChatBgColor);
-          setInputConfig(getInputColors(detectedActivity));
+        const detected = detectActivityFromMessage(msg.text);
+        if (detected) { 
+          setChatBackgroundColor(getActivityColor(detected, globalTheme));
+          setInputConfig(getInputColors(detected, globalTheme));
         }
-        // If the new message does NOT contain a keyword, we don't revert the color.
+        // If the new message does NOT contain a keyword, we don't revert the theme.
         // The color should persist from the last keyword message.
       }
     });
@@ -167,18 +178,19 @@ export default function ChatScreen({ route }) {
   // 5. Render messages (oldest at top, newest at bottom)
   const renderItem = ({ item }) => {
     const isMine = item.sender === myId;
-    const bubbleColor = getBubbleColor(item.text, activity); // Get color based on text and activity
+    // Pass globalTheme and isMine to getBubbleColor
+    const bubbleColor = getBubbleColor(item.text, activity, globalTheme, isMine); 
 
     return (
       <View style={[
-        styles.messageBubble,
-        isMine ? styles.myMessage : styles.otherMessage,
-        { backgroundColor: bubbleColor } // Apply color to all bubbles
+        styles.messageBubble, // Base bubble style from getStyles
+        isMine ? styles.myMessage : styles.otherMessage, // Alignment
+        { backgroundColor: bubbleColor } // Dynamic background color
       ]}>
-        <Text style={styles.msgText}>{item.text}</Text>
+        <Text style={styles.msgText}>{item.text}</Text> 
         <Text style={styles.msgMeta}>
           {isMine ? 'You' : username} · {item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : ''}
-        </Text>
+        </Text> 
       </View>
     );
   };
@@ -192,24 +204,26 @@ export default function ChatScreen({ route }) {
         data={messages} // natural order: oldest to newest
         renderItem={renderItem}
         keyExtractor={(item, idx) => item._id || String(idx)}
-        contentContainerStyle={{ padding: 16, paddingBottom: 90 }} // Ensure paddingBottom is enough for inputRow
+        contentContainerStyle={styles.flatListContent}
       />
       <View style={[
-        styles.inputRow,
+        styles.inputRow, // Base inputRow style from getStyles
         { 
-          backgroundColor: inputConfig.rowBgColor,
-          borderTopColor: inputConfig.rowBorderTopColor,
+          backgroundColor: inputConfig.rowBgColor, // Dynamic background
+          borderTopColor: inputConfig.rowBorderTopColor, // Dynamic border
         }
       ]}>
         <TextInput
           style={[
-            styles.input,
-            { borderColor: inputConfig.inputBorderColor, backgroundColor: '#ffffff' } // Explicit white background
+            styles.input, // Base input style from getStyles
+            { borderColor: inputConfig.inputBorderColor } // Dynamic border
           ]}
           placeholder="Type a message..."
+          placeholderTextColor={globalTheme.secondaryText} // Use theme placeholder color
           value={text}
           onChangeText={setText}
           onSubmitEditing={handleSend}
+          keyboardAppearance="dark" // Dark keyboard
         />
         <TouchableOpacity style={styles.sendBtn} onPress={handleSend} disabled={!text.trim()}>
           <Text style={styles.sendBtnText}>Send</Text>
@@ -219,37 +233,83 @@ export default function ChatScreen({ route }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 }, // backgroundColor will be dynamic
-  messageBubble: {
-    marginVertical: 4,
-    padding: 10,
-    borderRadius: 10,
-    maxWidth: '80%',
+// Styles are now a function that accepts the globalTheme
+const getStyles = (theme) => StyleSheet.create({
+  container: { // This style is used by KeyboardAvoidingView, but its background is dynamic
+    flex: 1,
   },
-  myMessage: { alignSelf: 'flex-end' }, // backgroundColor will be set by getBubbleColor
-  otherMessage: { alignSelf: 'flex-start' }, // backgroundColor will be set by getBubbleColor
-  msgText: { fontSize: 16 },
-  msgMeta: { fontSize: 11, color: '#888', marginTop: 3 },
+  flatListContent: {
+    padding: 16, 
+    paddingBottom: 90, // Ensure paddingBottom is enough for inputRow
+  },
+  messageBubble: {
+    marginVertical: 5, // Slightly more margin
+    paddingHorizontal: 12, // More horizontal padding
+    paddingVertical: 8, // More vertical padding
+    borderRadius: 12, // More rounded
+    maxWidth: '80%',
+    shadowColor: '#000', // Shadow for bubbles
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  myMessage: { 
+    alignSelf: 'flex-end',
+    // backgroundColor is now set dynamically in renderItem
+  },
+  otherMessage: { 
+    alignSelf: 'flex-start',
+    // backgroundColor is now set dynamically in renderItem
+  },
+  msgText: { 
+    fontSize: 16, 
+    color: theme.primaryText, // Light text for dark bubbles
+  },
+  msgMeta: { 
+    fontSize: 11, 
+    color: theme.secondaryText, // Lighter gray for meta text
+    marginTop: 4, 
+    textAlign: 'right', // Align meta text to the right for my messages
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderTopWidth: 1,
-    // borderColor is now dynamic (inputConfig.rowBorderTopColor)
-    // backgroundColor is now dynamic (inputConfig.rowBgColor)
-    position: 'absolute', // Keep it at the bottom
+    // backgroundColor and borderTopColor are now dynamic via inputConfig state
+    position: 'absolute', 
     bottom: 0, left: 0, right: 0,
   },
   input: { 
     flex: 1, 
-    padding: 12, 
+    paddingVertical: 10, // Adjusted padding
+    paddingHorizontal: 15,
     borderWidth: 1, 
-    // borderColor is now dynamic (inputConfig.inputBorderColor)
     borderRadius: 20, 
     marginRight: 10,
-    // backgroundColor is now dynamic (explicitly #ffffff in JSX)
+    fontSize: 16,
+    backgroundColor: theme.inputBackground, // Use theme input background
+    color: theme.inputTextColor, // Use theme input text color
+    // borderColor is now dynamic via inputConfig state
   },
+  sendBtn: { 
+    backgroundColor: theme.accentGreen, // Use theme accent for send button
+    paddingHorizontal: 20, // Adjusted padding
+    paddingVertical: 10, 
+    borderRadius: 20, // Match input field's borderRadius
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendBtnText: { 
+    color: theme.buttonDefaultText, // Use theme button text color
+    fontWeight: 'bold', 
+    fontSize: 16 
+  },
+<<<<<<< HEAD
   sendBtn: { backgroundColor: '#1e90ff', paddingHorizontal: 22, paddingVertical: 10, borderRadius: 18 },
   sendBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });
+=======
+});
+>>>>>>> b9a8dcee09927536e2141da3dd8436deb11ed7c6
