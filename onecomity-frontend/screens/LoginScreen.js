@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
 import { loginUser } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 
 export default function LoginScreen({ navigation }) {
+  const theme = useContext(ThemeContext);
+  const styles = getStyles(theme); // Get styles dynamically
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -46,33 +50,85 @@ export default function LoginScreen({ navigation }) {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
 
-      <TextInput style={styles.input} placeholder="Email" onChangeText={setEmail} value={email} />
+      <TextInput 
+        style={styles.input} 
+        placeholder="Email" 
+        onChangeText={setEmail} 
+        value={email} 
+        placeholderTextColor={theme.secondaryText}
+        keyboardAppearance="dark" 
+      />
       <TextInput
         style={styles.input}
         placeholder="Password"
         secureTextEntry
         onChangeText={setPassword}
         value={password}
+        placeholderTextColor={theme.secondaryText}
+        keyboardAppearance="dark"
       />
 
-      <Button title="Login" onPress={handleLogin} />
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>Login</Text>
+      </TouchableOpacity>
       <View style={styles.spacer} />
-      <Button title="Go to Register" onPress={() => navigation.navigate('Register')} />
+      <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={() => navigation.navigate('Register')}>
+        <Text style={[styles.buttonText, styles.secondaryButtonText]}>Go to Register</Text>
+      </TouchableOpacity>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, justifyContent: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
+// Styles are now a function that accepts theme
+const getStyles = (theme) => StyleSheet.create({
+  container: { 
+    flex: 1, 
+    padding: 20, 
+    justifyContent: 'center', 
+    backgroundColor: theme.primaryBackground 
+  },
+  title: { 
+    fontSize: 24, 
+    marginBottom: 20, 
+    textAlign: 'center', 
+    color: theme.primaryText 
+  },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: theme.inputBorderColor,
+    backgroundColor: theme.inputBackground,
+    color: theme.inputTextColor,
     borderRadius: 6,
-    padding: 10,
+    padding: 12, // Increased padding slightly
     marginBottom: 15,
+    fontSize: 16, // Added font size
   },
-  spacer: { height: 10 },
-  error: { marginTop: 20, color: 'red', fontSize: 16, textAlign: 'center' },
+  button: {
+    backgroundColor: theme.accentGreen,
+    padding: 15,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: theme.buttonDefaultText,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  secondaryButton: {
+    backgroundColor: theme.tertiaryBackground,
+    borderColor: theme.accentGreen,
+    borderWidth: 1,
+  },
+  secondaryButtonText: {
+    color: theme.accentGreen,
+  },
+  spacer: { height: 10 }, // Kept for spacing between buttons
+  error: { 
+    marginTop: 20, 
+    color: theme.accentRed, 
+    fontSize: 16, 
+    textAlign: 'center' 
+  },
 });

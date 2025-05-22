@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, Image, TouchableOpacity } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { getNearbyUsers } from '../services/api';
+import { ThemeContext } from '../contexts/ThemeContext';
+import { darkMapStyle } from '../constants/mapStyles'; // Will create this file
 
 export default function NearbyUsersScreen({ route, navigation }) {
+  const theme = useContext(ThemeContext);
+  const styles = getStyles(theme); // Get styles dynamically
+
   const { activity } = route.params;
   const [location, setLocation] = useState(null);
   const [users, setUsers] = useState([]);
@@ -35,17 +40,19 @@ export default function NearbyUsersScreen({ route, navigation }) {
 
   if (loading || !location) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" />
-        <Text>Loading nearby users...</Text>
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color={theme.accentGreen} />
+        <Text style={styles.loaderText}>Loading nearby users...</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <MapView
         style={styles.map}
+        provider={MapView.PROVIDER_GOOGLE} // Important for custom styles on Android
+        customMapStyle={darkMapStyle} // Apply dark map style
         initialRegion={{
           latitude: location.latitude,
           longitude: location.longitude,
@@ -57,10 +64,12 @@ export default function NearbyUsersScreen({ route, navigation }) {
         <Marker
           coordinate={{ latitude: location.latitude, longitude: location.longitude }}
           title="You"
-          pinColor="green"
+          pinColor={theme.accentGreen} // Use theme accent for user's pin
         />
 
         {/* Nearby Users */}
+        {/* Note: The user-pin.png is light-colored, it should be visible on a dark map. 
+            If not, it would need to be replaced with a dark-theme-friendly asset. */}
         {users.map((user, idx) => {
           if (!user.location || !user.location.coordinates) return null;
           const [lng, lat] = user.location.coordinates;
@@ -105,7 +114,7 @@ export default function NearbyUsersScreen({ route, navigation }) {
             style={styles.chatPanelClose}
             onPress={() => setSelectedUser(null)}
           >
-            <Text style={{ color: '#888', marginTop: 8 }}>Close</Text>
+            <Text style={styles.chatPanelCloseText}>Close</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -113,34 +122,73 @@ export default function NearbyUsersScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  map: { flex: 1 },
-  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+// Styles are now a function that accepts theme
+const getStyles = (theme) => StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.primaryBackground, // Ensure container has theme background
+  },
+  map: { 
+    flex: 1 
+  },
+  loaderContainer: { // Renamed from loader to be more specific
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: theme.primaryBackground 
+  },
+  loaderText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: theme.secondaryText,
+  },
   chatPanel: {
     position: 'absolute',
     bottom: 24,
     left: 24,
     right: 24,
-    backgroundColor: '#fff',
+    backgroundColor: theme.secondaryBackground, // Use theme secondary background
     borderRadius: 14,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
+    shadowColor: '#000', // Shadow might be less visible but good for depth
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 10,
     zIndex: 99,
+    borderColor: theme.borderColor, // Add border for definition
+    borderWidth: 1,
   },
-  chatPanelTitle: { fontWeight: 'bold', fontSize: 18, marginBottom: 6, color: '#344' },
-  chatPanelActivity: { fontSize: 15, color: '#222', marginBottom: 10 },
+  chatPanelTitle: { 
+    fontWeight: 'bold', 
+    fontSize: 18, 
+    marginBottom: 6, 
+    color: theme.primaryText 
+  },
+  chatPanelActivity: { 
+    fontSize: 15, 
+    color: theme.secondaryText, // Use secondary text
+    marginBottom: 12, // Increased margin
+  },
   chatPanelButton: {
     marginTop: 6,
-    backgroundColor: '#1e90ff',
+    backgroundColor: theme.accentGreen, // Use theme accent for button
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  chatPanelButtonText: { color: 'white', fontWeight: 'bold', fontSize: 17 },
-  chatPanelClose: { marginTop: 10 },
+  chatPanelButtonText: { 
+    color: theme.buttonDefaultText, // Use theme button text color
+    fontWeight: 'bold', 
+    fontSize: 17 
+  },
+  chatPanelClose: { 
+    marginTop: 10 
+  },
+  chatPanelCloseText: {
+    color: theme.secondaryText, // Use secondary text for close
+    marginTop: 8,
+    fontSize: 14,
+  }
 });
 

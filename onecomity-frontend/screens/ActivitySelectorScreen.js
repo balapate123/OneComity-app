@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native'; // Removed Button
 import * as Location from 'expo-location';
 import { updateActivity } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 export default function ActivitySelectorScreen({ navigation }) {
+  const theme = useContext(ThemeContext);
+  const styles = getStyles(theme); // Get styles dynamically
+
   const [locationGranted, setLocationGranted] = useState(false);
 
   useEffect(() => {
@@ -64,17 +68,46 @@ export default function ActivitySelectorScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', padding: 20 },
-  title: { fontSize: 24, marginBottom: 30, fontWeight: 'bold' },
-  card: {
-    width: '80%',
-    padding: 20,
-    marginVertical: 10,
-    backgroundColor: '#eee',
-    borderRadius: 10,
-    alignItems: 'center',
+// Styles are now a function that accepts theme
+const getStyles = (theme) => StyleSheet.create({
+  container: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: theme.primaryBackground, 
+    padding: 20 
   },
-  emoji: { fontSize: 36 },
-  label: { fontSize: 18, marginTop: 10 },
+  title: { 
+    fontSize: 28, // Slightly larger title
+    marginBottom: 40, // Increased spacing
+    fontWeight: 'bold', 
+    color: theme.primaryText,
+    textAlign: 'center',
+  },
+  card: {
+    width: '85%', // Slightly wider cards
+    paddingVertical: 25, // Increased vertical padding
+    paddingHorizontal: 20,
+    marginVertical: 12, // Increased margin
+    backgroundColor: theme.secondaryBackground, // Use secondary background for cards
+    borderRadius: 12, // Slightly more rounded corners
+    alignItems: 'center',
+    shadowColor: '#000', // Add shadow for depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderColor: theme.borderColor, // Add subtle border
+    borderWidth: 1,
+  },
+  emoji: { 
+    fontSize: 40, // Larger emoji
+    marginBottom: 5, // Added margin below emoji
+  },
+  label: { 
+    fontSize: 20, // Larger label
+    marginTop: 10, 
+    color: theme.primaryText, // Use primary text for labels
+    fontWeight: '500', // Medium weight for labels
+  },
 });
