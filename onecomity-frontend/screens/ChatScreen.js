@@ -306,10 +306,4 @@ const getStyles = (theme) => StyleSheet.create({
     fontWeight: 'bold', 
     fontSize: 16 
   },
-<<<<<<< HEAD
-  sendBtn: { backgroundColor: '#1e90ff', paddingHorizontal: 22, paddingVertical: 10, borderRadius: 18 },
-  sendBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });
-=======
-});
->>>>>>> b9a8dcee09927536e2141da3dd8436deb11ed7c6
