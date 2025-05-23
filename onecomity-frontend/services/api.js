@@ -36,6 +36,9 @@ export const getChatMessages = (userId) => API.get(`/chats/${userId}`); // plura
 export const sendChatMessage = (receiverId, text) => API.post('/chats/send', { receiverId, text });
 export const getChatList = () => API.get('/chats');
 export const hideChat = (partnerId) => API.delete(`/chats/${partnerId}/hide`);
+export const hardDeleteChat = (partnerId) =>
+  API.delete(`/chats/${partnerId}/hard`);
+
 
 
 // If you want to use the default axios instance for custom requests

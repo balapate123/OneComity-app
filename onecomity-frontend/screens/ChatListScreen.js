@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import { SwipeListView } from 'react-native-swipe-list-view';
-import { getChatList, hideChat } from '../services/api'; // Added hideChat
+import { getChatList, hardDeleteChat } from '../services/api'; // Added hideChat
 import { ThemeContext } from '../contexts/ThemeContext';
 
 export default function ChatListScreen({ navigation }) {
@@ -26,14 +26,12 @@ export default function ChatListScreen({ navigation }) {
 
   const confirmDeleteChat = async (chatItemToDelete) => {
     try {
-      const partnerId = chatItemToDelete._id; // This is the ID of the other user in the chat
-      await hideChat(partnerId);
-
-      setChats(prevChats =>
+        const partnerId = chatItemToDelete._id;
+        await hardDeleteChat(partnerId); // <--- Use the new hard delete!
+        setChats(prevChats =>
         prevChats.filter(chat => chat._id !== chatItemToDelete._id)
-      );
-      // Optionally: show success feedback (e.g., a toast message)
-      console.log(`Chat with ${chatItemToDelete.username} successfully hidden.`);
+        );
+        console.log(`Chat with ${chatItemToDelete.username} deleted.`);
 
     } catch (error) {
       console.error('Failed to delete chat:', error.response?.data || error.message);
@@ -57,19 +55,27 @@ export default function ChatListScreen({ navigation }) {
 
   const renderChatItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.chatItem} // This is the visible row
-      activeOpacity={1} // To prevent opacity change on press when swiped
-      onPress={() =>
+        style={styles.chatItem}
+        activeOpacity={1}
+        onPress={() =>
         navigation.navigate('ChatScreen', {
-          userId: item._id,
-          username: item.username,
-          activity: item.activity,
-          name: item.name,
+            userId: item._id,
+            username: item.username,
+            activity: item.activity,
+            name: item.name,
         })
-      }
+        }
     >
-      <Text style={styles.chatName}>{item.username}</Text>
-      <Text style={styles.chatSub}>Display Name: {item.name}</Text>
+        <Text style={styles.chatName}>{item.username}</Text>
+        <Text style={styles.chatSub}>Display Name: {item.name}</Text>
+        {/* Show the last message, truncated to one line */}
+        <Text
+        style={styles.lastMsg}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        >
+        {item.lastMessage || "No messages yet."}
+        </Text>
     </TouchableOpacity>
   );
 
@@ -203,4 +209,10 @@ const getStyles = (theme) => StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  lastMsg: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+
 });
