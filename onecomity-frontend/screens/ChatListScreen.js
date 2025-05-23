@@ -67,7 +67,7 @@ export default function ChatListScreen({ navigation }) {
         }
     >
         <Text style={styles.chatName}>{item.username}</Text>
-        <Text style={styles.chatSub}>Display Name: {item.name}</Text>
+        <Text style={styles.chatSub}>Name: {item.name}</Text>
         {/* Show the last message, truncated to one line */}
         <Text
         style={styles.lastMsg}
