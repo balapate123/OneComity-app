@@ -4,8 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from 'socket.io-client';
 import api, { getChatMessages } from '../services/api';
 import { ThemeContext } from '../contexts/ThemeContext';
+import Constants from 'expo-constants';
 
-const SOCKET_URL = 'http://192.168.2.34:5000'; // Your backend Socket.IO URL
+const { API_URL, SOCKET_URL } = Constants.expoConfig.extra;
+//const SOCKET_URL = 'http://192.168.2.34:5000'; // Your backend Socket.IO URL
 
 // Helper for bubble color - NOW THEME AWARE
 const getBubbleColor = (messageText, activity, globalTheme, isMine) => {

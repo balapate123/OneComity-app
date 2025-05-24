@@ -1,8 +1,12 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+
+
+const { API_URL, SOCKET_URL } = Constants.expoConfig.extra;
 
 const API = axios.create({
-  baseURL: 'http://192.168.2.34:5000/api', // <-- set to your backend IP
+  baseURL: API_URL, // <-- set to your backend IP
   timeout: 10000,
 });
 
@@ -35,6 +39,10 @@ export const updateActivity = (activity) =>
 export const getChatMessages = (userId) => API.get(`/chats/${userId}`); // plural: 'chats'
 export const sendChatMessage = (receiverId, text) => API.post('/chats/send', { receiverId, text });
 export const getChatList = () => API.get('/chats');
+export const hideChat = (partnerId) => API.delete(`/chats/${partnerId}/hide`);
+export const hardDeleteChat = (partnerId) =>
+  API.delete(`/chats/${partnerId}/hard`);
+
 
 
 // If you want to use the default axios instance for custom requests
