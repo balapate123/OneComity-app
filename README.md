@@ -1,5 +1,3 @@
----
-
 # 🌿 OneComity - Meet. Match. Mellow.
 
 OneComity is a **mobile-first social discovery app** that helps you meet and connect with nearby people who are:
