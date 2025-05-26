@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 
 
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 app.use(helmet());
 app.use(rateLimit({
