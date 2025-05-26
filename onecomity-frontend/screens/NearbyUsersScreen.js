@@ -70,7 +70,7 @@ export default function NearbyUsersScreen({ route, navigation }) {
         {/* Nearby Users */}
         {/* Note: The user-pin.png is light-colored, it should be visible on a dark map. 
             If not, it would need to be replaced with a dark-theme-friendly asset. */}
-        {users.map((user, idx) => {
+        {users && users.map((user, idx) => {
           if (!user.location || !user.location.coordinates) return null;
           const [lng, lat] = user.location.coordinates;
           return (

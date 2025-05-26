@@ -10,8 +10,8 @@ mongoose.connect(process.env.MONGO_URI)
 // Use the hashed password for all dummy users ("password123")
 const hashedPassword = "$2b$10$O4YzLgk3tN6SnKvzEv6geuzwZm7dcRJMWb5dBpdyM/2xGZcZed/1S";
 
-const baseLat = 43.7681939;
-const baseLng = -79.2206617;
+const baseLat = 43.7717153;
+const baseLng = -79.3449084;
 
 // Helper to generate random Reddit-style username
 function generateUsername() {
@@ -28,7 +28,7 @@ const activities = ["weed", "wine", "water"];
 let dummyUsers = [];
 
 activities.forEach((activity, activityIdx) => {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 5; i++) {
         dummyUsers.push({
             email: `testuser_${activity}_${i + 1}@comity.com`,
             mobile: `+19050000${activityIdx}${i + 10}`,

@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "1Comity",
+    "name": "onecomity-frontend",
     "slug": "onecomity-frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
