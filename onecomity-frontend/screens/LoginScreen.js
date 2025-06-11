@@ -3,6 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity } from 'rea
 import { loginUser } from '../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemeContext } from '../contexts/ThemeContext';
+import Constants from 'expo-constants'; // <--- Add this
 
 
 export default function LoginScreen({ navigation }) {
@@ -40,10 +41,24 @@ export default function LoginScreen({ navigation }) {
 
         navigation.navigate('Home');
     } catch (err) {
+        // Get the most detailed error message possible
         const errorMessage =
-        err?.response?.data?.msg || err?.message || 'Login failed. Please try again.';
-        setError(errorMessage);
-    }
+            err?.response?.data?.msg ||
+            err?.response?.data?.error ||
+            err?.message ||
+            JSON.stringify(err) ||
+            'Login failed. Please try again.';
+
+        // Log it to the console for emulators/devices with logs
+        console.log('LOGIN ERROR:', errorMessage, err);
+        
+
+        // Show alert box with the full error message
+        alert('Login Error:\n' + err);
+        console.log('API_URL in build:', Constants.expoConfig.extra.API_URL);
+
+        setError(errorMessage); // Still update UI for normal cases
+        }
     };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { getChatList } from '../services/api';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
+import { SwipeListView } from 'react-native-swipe-list-view';
+import { getChatList, hardDeleteChat } from '../services/api'; // Added hideChat
 import { ThemeContext } from '../contexts/ThemeContext';
 
 export default function ChatListScreen({ navigation }) {
@@ -23,6 +24,72 @@ export default function ChatListScreen({ navigation }) {
     })();
   }, []);
 
+  const confirmDeleteChat = async (chatItemToDelete) => {
+    try {
+        const partnerId = chatItemToDelete._id;
+        await hardDeleteChat(partnerId); // <--- Use the new hard delete!
+        setChats(prevChats =>
+        prevChats.filter(chat => chat._id !== chatItemToDelete._id)
+        );
+        console.log(`Chat with ${chatItemToDelete.username} deleted.`);
+
+    } catch (error) {
+      console.error('Failed to delete chat:', error.response?.data || error.message);
+      Alert.alert(
+        'Error', 
+        error.response?.data?.msg || 'Failed to hide chat. Please try again later.'
+      );
+    }
+  };
+
+  const handleDeletePress = (chatItem) => {
+    Alert.alert(
+      "Delete Chat?",
+      `Are you sure you want to delete this chat with ${chatItem.username}? This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel', onPress: () => console.log('Delete cancelled') },
+        { text: 'Delete', style: 'destructive', onPress: () => confirmDeleteChat(chatItem) }
+      ]
+    );
+  };
+
+  const renderChatItem = ({ item }) => (
+    <TouchableOpacity
+        style={styles.chatItem}
+        activeOpacity={1}
+        onPress={() =>
+        navigation.navigate('ChatScreen', {
+            userId: item._id,
+            username: item.username,
+            activity: item.activity,
+            name: item.name,
+        })
+        }
+    >
+        <Text style={styles.chatName}>{item.username}</Text>
+        <Text style={styles.chatSub}>Name: {item.name}</Text>
+        {/* Show the last message, truncated to one line */}
+        <Text
+        style={styles.lastMsg}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        >
+        {item.lastMessage || "No messages yet."}
+        </Text>
+    </TouchableOpacity>
+  );
+
+  const renderDeleteButtonView = (data, rowMap) => (
+    <View style={styles.rowBack}>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeletePress(data.item)}
+      >
+        <Text style={styles.deleteButtonText}>Delete</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -35,27 +102,21 @@ export default function ChatListScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>💬 Your Chats</Text>
-      <FlatList
+      <SwipeListView
         data={chats}
+        renderItem={renderChatItem}
+        renderHiddenItem={renderDeleteButtonView}
         keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.chatItem}
-            onPress={() =>
-              navigation.navigate('ChatScreen', {
-                userId: item._id,
-                username: item.username,
-                activity: item.activity, // Pass activity to ChatScreen
-                name: item.name, // Pass name to ChatScreen if needed for title
-              })
-            }
-          >
-            <Text style={styles.chatName}>{item.username}</Text>
-            <Text style={styles.chatSub}>Display Name: {item.name}</Text>
-            {/* You could add last message preview here if available */}
-          </TouchableOpacity>
-        )}
+        rightOpenValue={-85} // Width of the delete button + some margin
+        previewRowKey={chats[0]?._id.toString()} // Optional: preview swipe on first item
+        previewOpenValue={-70}
+        previewOpenDelay={1000}
+        disableRightSwipe={true}
         ListEmptyComponent={<Text style={styles.emptyListText}>No chats yet. Start chatting!</Text>}
+        contentContainerStyle={chats.length === 0 ? styles.emptyListContainer : {}}
+        closeOnRowPress={true}
+        closeOnScroll={true}
+        closeOnRowBeginSwipe={true}
       />
     </View>
   );
@@ -65,27 +126,32 @@ export default function ChatListScreen({ navigation }) {
 const getStyles = (theme) => StyleSheet.create({
   container: { 
     flex: 1, 
-    padding: 20,
+    paddingHorizontal: 20, // Use horizontal padding to allow full-width swipe items
+    paddingTop: 20,
     backgroundColor: theme.primaryBackground,
   },
   header: { 
-    fontSize: 28, // Slightly larger header
+    fontSize: 28, 
     fontWeight: 'bold', 
-    marginBottom: 25, // Increased margin
+    marginBottom: 25, 
     color: theme.primaryText,
+    paddingHorizontal: 0, // Ensure header doesn't get extra padding if container has it
   },
-  chatItem: {
-    padding: 18, // Increased padding
-    backgroundColor: theme.secondaryBackground, // Use theme secondary background
-    borderRadius: 10, // Slightly more rounded
-    marginBottom: 12, // Increased margin
-    borderColor: theme.borderColor, // Add border
+  chatItem: { // This is the visible row
+    padding: 18, 
+    backgroundColor: theme.secondaryBackground, 
+    borderRadius: 10, 
+    marginBottom: 12, 
+    borderColor: theme.borderColor, 
     borderWidth: 1,
-    shadowColor: '#000', // Add shadow for depth
+    // Keep shadows if desired, but ensure they don't interfere with swipe
+    shadowColor: '#000', 
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
     elevation: 3,
+    // Important: Ensure the visible item has a solid background
+    // so the hidden item doesn't peek through during swipe.
   },
   chatName: { 
     fontSize: 18, 
@@ -94,14 +160,14 @@ const getStyles = (theme) => StyleSheet.create({
   },
   chatSub: { 
     fontSize: 14, 
-    color: theme.secondaryText, // Use theme secondary text
-    marginTop: 4, // Added margin for spacing
+    color: theme.secondaryText, 
+    marginTop: 4, 
   },
   centered: { 
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    backgroundColor: theme.primaryBackground, // Theme background for loader screen
+    backgroundColor: theme.primaryBackground, 
   },
   loadingText: {
     marginTop: 10,
@@ -113,5 +179,40 @@ const getStyles = (theme) => StyleSheet.create({
     marginTop: 50,
     fontSize: 16,
     color: theme.secondaryText,
-  }
+  },
+  emptyListContainer: { // Added to help center the empty list text
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Styles for the hidden delete button
+  rowBack: {
+    alignItems: 'center',
+    backgroundColor: theme.primaryBackground, // Or a slightly different shade if preferred
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingRight: 0, // No padding on the right of the hidden view itself
+    marginBottom: 12, // Match chatItem's marginBottom
+    borderRadius: 10, // Match chatItem's borderRadius
+  },
+  deleteButton: {
+    backgroundColor: theme.accentRed,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 85, // Width of the delete button
+    height: '100%', // Make the button fill the height of the row
+    // borderRadius: 10, // Can apply borderRadius here too if rowBack doesn't have one
+  },
+  deleteButtonText: {
+    color: theme.buttonDefaultText, // Usually white or light gray
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  lastMsg: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
+  },
+
 });

@@ -4,8 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import io from 'socket.io-client';
 import api, { getChatMessages } from '../services/api';
 import { ThemeContext } from '../contexts/ThemeContext';
+import Constants from 'expo-constants';
 
-const SOCKET_URL = 'http://192.168.2.34:5000'; // Your backend Socket.IO URL
+const { API_URL, SOCKET_URL } = Constants.expoConfig.extra;
+//const SOCKET_URL = 'http://192.168.2.34:5000'; // Your backend Socket.IO URL
 
 // Helper for bubble color - NOW THEME AWARE
 const getBubbleColor = (messageText, activity, globalTheme, isMine) => {
@@ -198,8 +200,9 @@ export default function ChatScreen({ route }) {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: chatBackgroundColor }]}
-      behavior={Platform.select({ ios: 'padding', android: undefined })}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20} 
+        >
       <FlatList
         data={messages} // natural order: oldest to newest
         renderItem={renderItem}
@@ -272,15 +275,15 @@ const getStyles = (theme) => StyleSheet.create({
     marginTop: 4, 
     textAlign: 'right', // Align meta text to the right for my messages
   },
-  inputRow: {
+    inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderTopWidth: 1,
-    // backgroundColor and borderTopColor are now dynamic via inputConfig state
-    position: 'absolute', 
+    position: 'absolute',
     bottom: 0, left: 0, right: 0,
   },
+
   input: { 
     flex: 1, 
     paddingVertical: 10, // Adjusted padding

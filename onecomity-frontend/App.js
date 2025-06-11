@@ -17,6 +17,12 @@ import ChatScreen from './screens/ChatScreen';
 
 const Stack = createNativeStackNavigator();
 
+// Helper function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string) => {
+  if (!string) return '';
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -42,7 +48,15 @@ export default function App() {
           <Stack.Screen name="Otp" component={OtpScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Activity" component={ActivitySelectorScreen} />
-        <Stack.Screen name="NearbyScreen" component={NearbyUsersScreen} />
+        <Stack.Screen 
+          name="NearbyScreen" 
+          component={NearbyUsersScreen}
+          options={({ route }) => ({ 
+            title: route.params?.activity 
+              ? `Nearby ${capitalizeFirstLetter(route.params.activity)} Users` 
+              : 'Nearby Users' 
+          })}
+        />
         <Stack.Screen name="Chats" component={ChatListScreen} />
         <Stack.Screen
           name="ChatScreen"

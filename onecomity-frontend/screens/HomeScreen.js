@@ -22,7 +22,7 @@ export default function HomeScreen({ navigation }) {
       <Text style={styles.welcome}>
         {username ? `Welcome, ${username}!` : 'Welcome!'}
       </Text>
-      <Text style={styles.text}>🎉 Welcome to OneComity!</Text>
+      <Text style={styles.text}>🎉 Welcome to  !</Text>
       <Text style={styles.subtext}>Let’s find you some good company 🌿🍷💧</Text>
 
       <TouchableOpacity
